@@ -29,8 +29,11 @@ FROM amazoncorretto:11 as projectorGradleBuilder
 
 ENV PROJECTOR_DIR /projector
 
+RUN yum update
+RUN yum install git -y
+
 # projector-server:
-ADD projector-server $PROJECTOR_DIR/projector-server
+RUN git clone https://github.com/JetBrains/projector-server.git $PROJECTOR_DIR/projector-server
 WORKDIR $PROJECTOR_DIR/projector-server
 ARG buildGradle
 RUN if [ "$buildGradle" = "true" ]; then ./gradlew clean; else echo "Skipping gradle build"; fi
@@ -48,7 +51,7 @@ RUN mkdir -p $PROJECTOR_DIR
 # copy IDE:
 COPY --from=ideDownloader /ide $PROJECTOR_DIR/ide
 # copy projector files to the container:
-ADD projector-docker/static $PROJECTOR_DIR
+ADD static $PROJECTOR_DIR
 # copy projector:
 COPY --from=projectorGradleBuilder $PROJECTOR_DIR/projector-server/projector-server/build/distributions/projector-server.zip $PROJECTOR_DIR
 # prepare IDE - apply projector-server:
