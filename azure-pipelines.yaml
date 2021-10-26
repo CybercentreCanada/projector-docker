@@ -23,6 +23,14 @@ steps:
     inputs:
       command: login
       containerRegistry: $(containerRegistry)
+  - task: DownloadSecureFile@1
+    name: caCertificate
+    displayName: 'Download CA certificate'
+    inputs:
+      secureFile: 'ssl_proxy_corp_cse-cst_gc_ca.crt'
+  - script: |
+      mkdir -p $(Build.SourcesDirectory)/.work/cacerts
+      cp $(caCertificate.secureFilePath) $(Build.SourcesDirectory)/.work/cacerts/
   - task: Docker@2
     displayName: Build the image
     inputs:
@@ -30,7 +38,7 @@ steps:
       containerRegistry: $(containerRegistry)
       repository: $(imageRepository)
       # The downloadUrl is meant to point to the latest tested version of 'IntelliJ IDEA Community Edition' from https://github.com/JetBrains/projector-installer/blob/master/projector_installer/compatible_ide.json
-      arguments: --build-arg buildGradle=true --build-arg "downloadUrl=https://download.jetbrains.com/idea/ideaIC-2020.3.4.tar.gz"
+      arguments: --build-arg buildGradle=true --build-arg "extraCaCertsDir=.work/cacerts/" --build-arg "downloadUrl=https://download.jetbrains.com/idea/ideaIC-2021.2.3.tar.gz"
       tags: |
         $(BRANCH_NAME)
         $(BRANCH_NAME)_$(buildTimestamp)_b$(Build.BuildId)

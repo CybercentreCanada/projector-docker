@@ -118,6 +118,13 @@ RUN true \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
     && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
 
+ENV JAVA_HOME $PROJECTOR_DIR/ide/jbr
+
+# Add custom CA certs
+ARG extraCaCertsDir
+ADD ${extraCaCertsDir} /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
 USER $PROJECTOR_USER_NAME
 ENV HOME /home/$PROJECTOR_USER_NAME
 
