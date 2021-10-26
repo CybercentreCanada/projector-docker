@@ -124,7 +124,7 @@ ENV JAVA_HOME $PROJECTOR_DIR/ide/jbr
 ARG extraCaCertsDir
 ADD ${extraCaCertsDir} /usr/local/share/ca-certificates/
 RUN update-ca-certificates
-RUN for cert in /usr/local/share/ca-certificates/*; do openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; keytool -import -alias "$cert" -keystore /etc/ssl/certs/java/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; done; \
+RUN for cert in /usr/local/share/ca-certificates/*; do openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore /etc/ssl/certs/java/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; done; \
     && rm /tmp/certificate.der
 
 USER $PROJECTOR_USER_NAME
