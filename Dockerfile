@@ -64,6 +64,10 @@ RUN chmod 644 $PROJECTOR_DIR/ide/projector-server/lib/*
 
 FROM debian:10
 
+# Add custom CA certs
+ARG extraCaCertsDir
+ADD ${extraCaCertsDir} /usr/local/share/ca-certificates/
+
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
    && set -e \
@@ -74,7 +78,7 @@ RUN true \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
-    && apt-get install git bash-completion sudo -y \
+    && apt-get install ca-certificates git bash-completion sudo -y \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # clean apt to reduce image size:
@@ -120,15 +124,12 @@ RUN true \
 
 ENV JAVA_HOME $PROJECTOR_DIR/ide/jbr
 
-# Add custom CA certs
-ARG extraCaCertsDir
-ADD ${extraCaCertsDir} /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-RUN 'for cert in /usr/local/share/ca-certificates/*; do \
+# Add custom CA certs to Java trust
+RUN for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
     done \
-    && rm /tmp/certificate.der'
+    && rm /tmp/certificate.der
 
 USER $PROJECTOR_USER_NAME
 ENV HOME /home/$PROJECTOR_USER_NAME
