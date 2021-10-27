@@ -62,7 +62,7 @@ RUN mv projector-server $PROJECTOR_DIR/ide/projector-server
 RUN mv $PROJECTOR_DIR/ide-projector-launcher.sh $PROJECTOR_DIR/ide/bin
 RUN chmod 644 $PROJECTOR_DIR/ide/projector-server/lib/*
 
-FROM debian:10
+FROM eclipse-temurin:11-jdk-focal
 
 # Add custom CA certs
 ARG extraCaCertsDir
@@ -78,7 +78,7 @@ RUN true \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
-    && apt-get install ca-certificates git bash-completion sudo -y \
+    && apt-get install ca-certificates ca-certificates-java git bash-completion sudo -y \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # clean apt to reduce image size:
@@ -122,12 +122,10 @@ RUN true \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
     && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
 
-ENV JAVA_HOME $PROJECTOR_DIR/ide/jbr
-
 # Add custom CA certs to Java trust
 RUN for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
-        $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
+        $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
     done \
     && rm /tmp/certificate.der
 
