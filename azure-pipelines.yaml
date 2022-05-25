@@ -38,7 +38,7 @@ steps:
       containerRegistry: $(containerRegistry)
       repository: $(imageRepository)
       # The downloadUrl is meant to point to the latest tested version of 'IntelliJ IDEA Community Edition' from https://github.com/JetBrains/projector-installer/blob/master/projector_installer/compatible_ide.json
-      arguments: --build-arg buildGradle=true --build-arg "extraCaCertsDir=.work/cacerts/" --build-arg "downloadUrl=https://download.jetbrains.com/idea/ideaIC-2020.1.1.tar.gz"
+      arguments: --build-arg buildGradle=true --build-arg "extraCaCertsDir=.work/cacerts/" --build-arg "downloadUrl=https://download.jetbrains.com/idea/ideaIC-2021.3.2.tar.gz"
       tags: |
         $(BRANCH_NAME)
         $(BRANCH_NAME)_$(buildTimestamp)_b$(Build.BuildId)
