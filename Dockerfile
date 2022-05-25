@@ -29,7 +29,7 @@ FROM amazoncorretto:11 as projectorGradleBuilder
 
 ENV PROJECTOR_DIR /projector
 
-RUN yum update
+RUN yum update -y
 RUN yum install git -y
 
 # projector-server:
