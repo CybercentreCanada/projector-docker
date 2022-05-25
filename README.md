@@ -2,6 +2,17 @@
 
 [![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
+## Trino specific instructions on how to run the container:
+Run a Docker container with Projector and JetBrains IDE.
+
+### run-trino-env.sh
+ This is the only script you need to run, everything else is taken care of by DevOps with the azure pipeline.
+ This script will connect you to UChimera and give you acccess to our custom image.
+ 
+ ```shell script
+./run-trino-env.sh
+```
+
 Some scripts to create and run a Docker container with Projector and JetBrains IDE.
 
 [Documentation](https://jetbrains.github.io/projector-client/mkdocs/latest/)
@@ -168,3 +179,4 @@ you select `tar.gz` **with JBR**, not without.
 
 ## License
 [Apache 2.0](LICENSE.txt).
+
