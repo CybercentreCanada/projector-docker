@@ -1,6 +1,6 @@
 #!/bin/bash
 
-trinoCloneDir=${1:-~/repositories/trino}
+trinoCloneDir=${1:-~/repositories/cccs-work/trino}
 
 echo "Checking Azure login status"
 az account show >/dev/null

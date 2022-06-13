@@ -20,7 +20,7 @@ set -e # Any command which returns non-zero exit code will cause this shell scri
 set -x # Activate debugging to show execution details: all commands will be printed before execution
 
 containerName=${1:-intellij-ce}
-downloadUrl=${2:-https://download.jetbrains.com/idea/ideaIC-2020.3.4.tar.gz}
+downloadUrl=${2:-https://download.jetbrains.com/idea/ideaIC-2021.3.2.tar.gz}
 
 # build container:
 DOCKER_BUILDKIT=1 docker build --progress=plain -t "$containerName" --build-arg buildGradle=true --build-arg "downloadUrl=$downloadUrl" -f Dockerfile .
