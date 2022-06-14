@@ -12,7 +12,7 @@ Run a Docker container with Projector and JetBrains IDE.
  "~/repositories/cccs-work/trino".
  
  ```shell script
-./run-trino-env.sh
+./run-trino-env.sh [path to clone]
 ```
 
 Some scripts to create and run a Docker container with Projector and JetBrains IDE.
