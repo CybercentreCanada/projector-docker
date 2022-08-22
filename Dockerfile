@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+ARG containerJdkVersion
+
 FROM debian AS ideDownloader
 
 # prepare tools:
@@ -62,8 +64,7 @@ RUN mv projector-server $PROJECTOR_DIR/ide/projector-server
 RUN mv $PROJECTOR_DIR/ide-projector-launcher.sh $PROJECTOR_DIR/ide/bin
 RUN chmod 644 $PROJECTOR_DIR/ide/projector-server/lib/*
 
-ARG jdkVersion
-FROM eclipse-temurin:${jdkVersion}-jdk-jammy
+FROM eclipse-temurin:${containerJdkVersion}-jdk-jammy
 
 # Add custom CA certs
 ARG extraCaCertsDir
