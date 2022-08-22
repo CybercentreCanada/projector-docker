@@ -128,7 +128,7 @@ RUN true \
 RUN for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
-        $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
+        $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
     done \
     && rm /tmp/certificate.der
 
