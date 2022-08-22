@@ -62,7 +62,8 @@ RUN mv projector-server $PROJECTOR_DIR/ide/projector-server
 RUN mv $PROJECTOR_DIR/ide-projector-launcher.sh $PROJECTOR_DIR/ide/bin
 RUN chmod 644 $PROJECTOR_DIR/ide/projector-server/lib/*
 
-FROM eclipse-temurin:11-jdk-focal
+ARG jdkVersion
+FROM eclipse-temurin:${jdkVersion}-jdk-jammy
 
 # Add custom CA certs
 ARG extraCaCertsDir

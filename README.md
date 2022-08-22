@@ -2,17 +2,17 @@
 
 [![obsolete JetBrains project](https://jb.gg/badges/obsolete.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
-## Trino specific instructions on how to run the container:
+## CCCS-specific instructions on how to run our containers
 Run a Docker container with Projector and JetBrains IDE.
 
-### run-trino-env.sh
+### run-<project-name>-env.sh
  This is the only script you need to run, everything else is taken care of by DevOps with the azure pipeline.
  This script will connect you to UChimera and give you acccess to our custom image.  Please note that the script takes an optional
- argument that is the location where the trino repository was cloned, should you have a folder structure that differs from the standard
- "~/repositories/cccs-work/trino".
+ argument that is the location where the project's source code was cloned, should you have a folder structure that differs from the standard
+ `~/repositories/cccs-work/<project-name>`.
  
  ```shell script
-./run-trino-env.sh [path to clone]
+./run-<project-name>-env.sh [path to source code]
 ```
 
 Some scripts to create and run a Docker container with Projector and JetBrains IDE.
@@ -191,4 +191,3 @@ you select `tar.gz` **with JBR**, not without.
 
 ## License
 [Apache 2.0](LICENSE.txt).
-
