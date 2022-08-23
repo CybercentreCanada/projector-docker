@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.2
 #
 # Copyright 2019-2020 JetBrains s.r.o.
 #
@@ -64,7 +65,9 @@ RUN mv projector-server $PROJECTOR_DIR/ide/projector-server
 RUN mv $PROJECTOR_DIR/ide-projector-launcher.sh $PROJECTOR_DIR/ide/bin
 RUN chmod 644 $PROJECTOR_DIR/ide/projector-server/lib/*
 
-FROM eclipse-temurin:${containerJdkVersion}-jdk-jammy
+#FROM eclipse-temurin:${containerJdkVersion}-jdk-jammy
+# Use -focal because it supports Python 3.8
+FROM eclipse-temurin:${containerJdkVersion}-jdk-focal
 
 # Add custom CA certs
 ARG extraCaCertsDir
@@ -75,12 +78,19 @@ RUN true \
    && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
    && set -x \
+# Add the NodeJS 16 repo
+   && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 # install packages:
     && apt-get update \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
-    && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo -y \
+    && apt-get install git bash-completion sudo -y \
+# packages added for CCCS use (general use)
+    && apt-get install ca-certificates jq vim -y \
+# packages added for CCCS use (this specific image)
+    && apt-get install python3.8 python3-pip python3-setuptools python3.8-venv python-is-python3 nodejs -y \
+    && apt-get install python3.8-dev libsasl2-dev libldap2-dev libssl-dev -y \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # clean apt to reduce image size:
@@ -122,14 +132,33 @@ RUN true \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
-    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
+    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh \
+# install additional Python packages (*before* we mess with the CA bundle below)
+    && python3 -m pip --disable-pip-version-check --no-cache-dir install certifi \
+# install additional npm packages
+    && npm install --global yarn
 
-# Add custom CA certs to Java trust
-RUN for cert in /usr/local/share/ca-certificates/*; do \
+# install docker-in-docker (library script borrowed from https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/docker-in-docker-debian.sh)
+RUN --mount=type=bind,source=library-scripts,target=/tmp/library-scripts \
+    /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "true" "${PROJECTOR_USER_NAME}" "true"
+ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
+
+# Initialize custom CA bundle for Python
+ENV CURL_CA_BUNDLE="/usr/local/share/python-ca-bundle/cabundle.crt" \
+    REQUESTS_CA_BUNDLE="/usr/local/share/python-ca-bundle/cabundle.crt" \
+    NODE_EXTRA_CA_CERTS="/usr/local/share/python-ca-bundle/cabundle.crt"
+
+# Add custom CA certs to Java, Python, Node, etc.
+RUN mkdir $(dirname "${CURL_CA_BUNDLE}") \
+    && cp "$(python3 -m certifi)" "${CURL_CA_BUNDLE}" \
+    && for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
         $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
+        cat "${cert}" >>"${CURL_CA_BUNDLE}"; \
     done \
+    && python3 -m pip config --global set global.cert "${CURL_CA_BUNDLE}" \
+    && npm config --global set cafile "${CURL_CA_BUNDLE}" \
     && rm /tmp/certificate.der
 
 USER $PROJECTOR_USER_NAME

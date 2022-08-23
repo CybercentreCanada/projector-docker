@@ -27,9 +27,28 @@ if [[ ${ACR_LOGIN_STATUS} -eq 0 ]]; then
   docker login ${LOGIN_SERVER} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< ${ACCESS_TOKEN}
   DOCKER_LOGIN_STATUS=$?
   if [[ ${DOCKER_LOGIN_STATUS} -eq 0 ]]; then
-    mkdir -p ~/workspaces/datahub
+    containerHome="${HOME}/workspaces/datahub"
+    mkdir -p "${containerHome}"
+
+    echo "Setting up GPG and SSH sockets"
+    mkdir -p "${containerHome}/.gnupg"
+    gpgHomeDir=$(gpgconf --list-dir homedir)
+    gpgExtraSocket=$(gpgconf --list-dir agent-extra-socket)
+    cp "${gpgHomeDir}/pubring.kbx" "${gpgHomeDir}/trustdb.gpg" "${containerHome}/.gnupg"
+    echo "%Assuan%" >"${containerHome}/.gnupg/S.gpg-agent"
+    echo "socket=/usr/local/share/S.gpg-agent" >>"${containerHome}/.gnupg/S.gpg-agent"
+
     echo "Starting IDE"
-    docker run --rm --pull always -p 8887:8887 --mount type=bind,source="${HOME}/workspaces/datahub",target=/home/projector-user --mount type=bind,source="${sourceDir}",target=/workspace/datahub -it uchimera.azurecr.io/cccs/dev/projector-intellij-ce:datahub
+    docker run --rm -it --pull always \
+      --init --privileged \
+      -p 8887:8887 \
+      --env SSH_AUTH_SOCK=/usr/local/share/ssh-agent.sock \
+      --mount type=bind,source="${containerHome}",target=/home/projector-user \
+      --mount type=bind,source="${gpgExtraSocket}",target=/usr/local/share/S.gpg-agent \
+      --mount type=bind,source="${HOME}/.ssh/agent.sock",target=/usr/local/share/ssh-agent.sock \
+      --mount type=bind,source="${sourceDir}",target=/workspace/datahub \
+      --mount type=volume,source=datahub-dind-var-lib-docker,target=/var/lib/docker \
+      uchimera.azurecr.io/cccs/dev/projector-intellij-ce:datahub
   else
     echo "Docker login failed"
     exit 1
