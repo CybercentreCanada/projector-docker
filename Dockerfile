@@ -130,9 +130,8 @@ RUN true \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-    && mkdir -p /tmp/library-scripts/
-    
-COPY library-scripts/*.sh /tmp/library-scripts/
+
+COPY library-scripts/*.sh /$PROJECTOR_DIR/library-scripts/
 
 # Add custom CA certificates to Java trust
 RUN for cert in /usr/local/share/ca-certificates/*; do \
@@ -160,7 +159,7 @@ RUN update-ca-certificates \
     # Install the Azure CLI
     && bash /tmp/library-scripts/azcli-debian.sh \
     # Clean up
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/ \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
