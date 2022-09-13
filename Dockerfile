@@ -118,8 +118,6 @@ ARG ENABLE_NONROOT_DOCKER="true"
 # [Option] Use the OSS Moby CLI instead of the licensed Docker CLI
 ARG USE_MOBY="true"
 
-COPY library-scripts/*.sh /tmp/library-scripts/
-
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
@@ -132,6 +130,9 @@ RUN true \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && mkdir -p /tmp/library-scripts/
+    
+COPY library-scripts/*.sh /tmp/library-scripts/
 
 # Add custom CA certificates to Java trust
 RUN for cert in /usr/local/share/ca-certificates/*; do \
