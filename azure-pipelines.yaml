@@ -10,7 +10,7 @@ variables:
   containerRegistry: uchimera
   imageRepository: cccs/dev/projector-intellij-ce
   buildTimestamp: $[format('{0:yyyyMMddHHmmss}', pipeline.startTime)]
-  containerJdkVersion: 17
+  containerJdkVersion: 11
   DOCKER_BUILDKIT: 1
 
 pool: cauldron-vmss

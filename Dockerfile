@@ -134,29 +134,6 @@ RUN for cert in /usr/local/share/ca-certificates/*; do \
 USER $PROJECTOR_USER_NAME
 ENV HOME /home/$PROJECTOR_USER_NAME
 
-# Setup for Trino environment and with AzDevOps_azpcontainer user
-ARG USERNAME=AzDevOps_azpcontainer
-ARG USER_UID=1001 
-ARG USER_GID=$USER_UID
-
-RUN  true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-    # Try to create a user with UID '1001' inside the container.
-    && useradd -m -u 1001 AzDevOps_azpcontainer \
-    # Grant user 'AzDevOps_azpcontainer' SUDO privilege and allow it run any command without authentication.
-    && groupadd azure_pipelines_sudo \
-    && usermod -a -G azure_pipelines_sudo AzDevOps_azpcontainer \
-    && su -c "echo '%azure_pipelines_sudo ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers"
-    # Allow user 'AzDevOps_azpcontainer' run any docker command without SUDO.
-    && stat -c %g /var/run/docker.sock \
-    && cat /etc/group \
-    && groupadd -g 997 azure_pipelines_docker \
-    && usermod -a -G azure_pipelines_docker AzDevOps_azpcontainer \
-
-
 EXPOSE 8887
 
 CMD ["bash", "-c", "/run.sh"]
