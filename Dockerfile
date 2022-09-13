@@ -142,11 +142,8 @@ RUN for cert in /usr/local/share/ca-certificates/*; do \
 
 USER $PROJECTOR_USER_NAME
 ENV HOME /home/$PROJECTOR_USER_NAME
-
-# Use the Maven cache from the host and persist Bash history
-RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_UID}:${USER_GID} /usr/local/share/m2 \
-    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+ARG PROJECTOR_USER_UID=1000
+ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
 
 # Setting up Trino environment
 
@@ -157,7 +154,6 @@ RUN true \
     && set -x \
 RUN update-ca-certificates \
     && apt-get update \
-    && /bin/bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${PROJECTOR_USER_NAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" "true" "true" \
     # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
     # Install the Azure CLI
@@ -173,10 +169,16 @@ RUN update-ca-certificates \
     && touch /usr/local/share/bash_history \
     && chown ${USERNAME} /usr/local/share/bash_history
 
+# Use the Maven cache from the host and persist Bash history
+RUN mkdir -p /usr/local/share/m2 \
+    && chown -R ${USER_UID}:${USER_GID} /usr/local/share/m2 \
+    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+
+
 ARG MAVEN_VERSION=""
 ARG TRINO_VERSION="395"
 # Install Maven
-RUN su projector-user -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
     # Install additional OS packages.
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
@@ -189,5 +191,4 @@ RUN su projector-user -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh &
 
 EXPOSE 8887
 
-ENTRYPOINT [ "/usr/local/share/docker-init.sh"]
 CMD ["bash", "-c", "/run.sh"]
