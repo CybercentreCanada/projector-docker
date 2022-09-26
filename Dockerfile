@@ -161,7 +161,7 @@ RUN update-ca-certificates \
     # Clean up
     # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
     && groupadd -g $(cat /etc/group) azure_pipelines_docker \
-    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME
+    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
