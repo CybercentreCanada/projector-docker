@@ -152,24 +152,24 @@ RUN true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
-RUN update-ca-certificates \
-    && apt-get update \
+    && update-ca-certificates \
+    && apt-get update  && apt-get install -y apt-transport-https \
     # # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     # && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
     # # Install the Azure CLI
     # && bash /tmp/library-scripts/azcli-debian.sh \
     # Clean up
     # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
-    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
-    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
+#    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
+#    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
-    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
-    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
-    && touch /usr/local/share/bash_history \
-    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
+#    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
+#    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
+#    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
+#    && touch /usr/local/share/bash_history \
+#    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
