@@ -129,9 +129,9 @@ RUN true \
     && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
-    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-COPY library-scripts/*.sh /$PROJECTOR_DIR/library-scripts/
+# COPY library-scripts/*.sh /$PROJECTOR_DIR/library-scripts/
 
 # Add custom CA certificates to Java trust
 RUN for cert in /usr/local/share/ca-certificates/*; do \
@@ -154,24 +154,26 @@ RUN true \
     && set -x \
 RUN update-ca-certificates \
     && apt-get update \
-    # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
-    && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
-    # Install the Azure CLI
-    && bash /tmp/library-scripts/azcli-debian.sh \
+    # # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
+    # && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
+    # # Install the Azure CLI
+    # && bash /tmp/library-scripts/azcli-debian.sh \
     # Clean up
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
+    # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
+    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
+    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-    && mkdir -p /home/${USERNAME}/.ssh \
+    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
     && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
-    && chown -R ${USERNAME} /home/${USERNAME}/.ssh \
+    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
     && touch /usr/local/share/bash_history \
-    && chown ${USERNAME} /usr/local/share/bash_history
+    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_UID}:${USER_GID} /usr/local/share/m2 \
+    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
     && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
 
 
