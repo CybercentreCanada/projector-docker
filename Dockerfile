@@ -134,7 +134,7 @@ RUN true \
     && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
-    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
 # set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     && groupadd -g $(cat /etc/group) azure_pipelines_docker \
     && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
@@ -179,6 +179,7 @@ RUN true \
 
 ARG MAVEN_VERSION=""
 ARG TRINO_VERSION="395"
+
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
     # Install additional OS packages.
