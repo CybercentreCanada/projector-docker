@@ -160,8 +160,8 @@ RUN true \
     # && bash /tmp/library-scripts/azcli-debian.sh \
     # Clean up
     # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
-#    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
-#    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
+    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
+    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
@@ -172,9 +172,9 @@ RUN true \
 #    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
 # Use the Maven cache from the host and persist Bash history
-RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
-    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+# RUN mkdir -p /usr/local/share/m2 \
+#    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+#    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
 
 
 ARG MAVEN_VERSION=""
