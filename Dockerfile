@@ -72,9 +72,10 @@ ADD ${extraCaCertsDir} /usr/local/share/ca-certificates/
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
-   && set -e \
+    && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
-   && set -x \
+    && set -x \
+    && update-ca-certificates \
 # install packages:
     && apt-get update \
 # packages for awt:
@@ -108,6 +109,10 @@ ENV PROJECTOR_DIR /projector
 COPY --from=projectorStaticFiles $PROJECTOR_DIR $PROJECTOR_DIR
 
 ENV PROJECTOR_USER_NAME projector-user
+USER $PROJECTOR_USER_NAME
+ENV HOME /home/$PROJECTOR_USER_NAME
+ARG PROJECTOR_USER_UID=1000
+ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
@@ -130,7 +135,9 @@ RUN true \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
+# set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
+    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
+    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
 # COPY library-scripts/*.sh /$PROJECTOR_DIR/library-scripts/
 
 # Add custom CA certificates to Java trust
@@ -140,11 +147,6 @@ RUN for cert in /usr/local/share/ca-certificates/*; do \
     done \
     && rm /tmp/certificate.der
 
-USER $PROJECTOR_USER_NAME
-ENV HOME /home/$PROJECTOR_USER_NAME
-ARG PROJECTOR_USER_UID=1000
-ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
-
 # Setting up Trino environment
 
 RUN true \
@@ -152,7 +154,6 @@ RUN true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
-    && update-ca-certificates \
     && apt-get update  && apt-get install -y apt-transport-https \
     # # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     # && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
@@ -160,8 +161,7 @@ RUN true \
     # && bash /tmp/library-scripts/azcli-debian.sh \
     # Clean up
     # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
-    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
-    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
+
     # Trust the GitHub public RSA key
     # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
     # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
