@@ -136,7 +136,7 @@ RUN true \
     && useradd -m -d /home/$PROJECTOR_USER_NAME -u $PROJECTOR_USER_UID -s /bin/bash -g sudo,azure_pipelines_docker,$PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
     && ls -al /home \
-    && cat /etc/group
+    && cat /etc/group \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
     && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home \
