@@ -130,12 +130,7 @@ RUN true \
     && mv $PROJECTOR_DIR/run.sh run.sh \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
     && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home \
-    && groupadd -g $PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
     && useradd -d /home/$PROJECTOR_USER_NAME -u $PROJECTOR_USER_UID -s /bin/bash -G sudo,$PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
-    && id -u $PROJECTOR_USER_NAME \
-    && ls -al /home \
-    && cat /etc/group \
-    && cat /etc/passwd \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
