@@ -112,7 +112,6 @@ ENV PROJECTOR_USER_NAME projector-user
 ENV HOME /home/$PROJECTOR_USER_NAME
 ARG PROJECTOR_USER_UID=1000
 ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
-USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
@@ -130,11 +129,12 @@ RUN true \
     && set -x \
 # Move run scipt:
     && mv $PROJECTOR_DIR/run.sh run.sh \
+# Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
+    && useradd -m -d /home/$PROJECTOR_USER_NAME -u $PROJECTOR_USER_UID -s /bin/bash -G $PROJECTOR_USER_GID,sudo,docker $PROJECTOR_USER_NAME \
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
     && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home \
-# Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
-    && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
-    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
 
+USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 
 CMD ["bash", "-c", "/run.sh"]
