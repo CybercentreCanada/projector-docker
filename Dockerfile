@@ -135,65 +135,6 @@ RUN true \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-# set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
-    && groupadd -g $(cat /etc/group) azure_pipelines_docker \
-    && usermod -a -G azure_pipelines_docker  $PROJECTOR_USER_NAME \
 
-## Add custom CA certificates to Java trust
-#RUN true \
-## Any command which returns non-zero exit code will cause this shell script to exit immediately:
-#    && set -e \
-## Activate debugging to show execution details: all commands will be printed before execution
-#    && set -x \ for cert in /usr/local/share/ca-certificates/*; do \
-#        openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
-#        $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
-#    done \
-#    && rm /tmp/certificate.der
-
-# Setting up Trino environment
-RUN true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-    && apt-get update  && apt-get install -y apt-transport-https \
-    # # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
-    # && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
-    # # Install the Azure CLI
-    # && bash /tmp/library-scripts/azcli-debian.sh \
-    # Clean up
-    # && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
-
-    # Trust the GitHub public RSA key
-    # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
-    # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-#    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
-#    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
-#    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
-#    && touch /usr/local/share/bash_history \
-#    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
-
-# Use the Maven cache from the host and persist Bash history
-# RUN mkdir -p /usr/local/share/m2 \
-#    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
-#    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
-
-
-ARG MAVEN_VERSION=""
-ARG TRINO_VERSION="395"
-
-# Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
-    # Install additional OS packages.
-    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends bash-completion vim \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
-    # Install Trino CLI
-    && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
-    && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
-    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
-
-
-EXPOSE 8887
 
 CMD ["bash", "-c", "/run.sh"]
