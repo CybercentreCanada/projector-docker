@@ -109,7 +109,6 @@ ENV PROJECTOR_DIR /projector
 COPY --from=projectorStaticFiles $PROJECTOR_DIR $PROJECTOR_DIR
 
 ENV PROJECTOR_USER_NAME projector-user
-ENV HOME /home/$PROJECTOR_USER_NAME
 ARG PROJECTOR_USER_UID=1000
 ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
 
@@ -129,18 +128,75 @@ RUN true \
     && set -x \
 # Move run scipt:
     && mv $PROJECTOR_DIR/run.sh run.sh \
-# Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
-    && groupadd -g $(stat -c %g /var/run/docker.sock) azure_pipelines_docker \
+# Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
+    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home \
     && groupadd -g $PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
-    && cat /etc/passwd \
-    && useradd -m -d /home/$PROJECTOR_USER_NAME -u $PROJECTOR_USER_UID -s /bin/bash -g sudo,azure_pipelines_docker,$PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
+    && useradd -d /home/$PROJECTOR_USER_NAME -u $PROJECTOR_USER_UID -s /bin/bash -G sudo,$PROJECTOR_USER_GID $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
     && ls -al /home \
     && cat /etc/group \
+    && cat /etc/passwd \
+# Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-# Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
-    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home \
+    && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
+    && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
+    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
+
+# Add custom CA certificates to Java trust
+RUN true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    &&  set -x \ for cert in /usr/local/share/ca-certificates/*; do \
+        openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
+        $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
+    done \
+    && rm /tmp/certificate.der
+
 
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
+ENV HOME /home/$PROJECTOR_USER_NAME
 
+# Setting up Trino environment
+RUN true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+    && apt-get update  && apt-get install -y apt-transport-https \
+    # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
+    && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
+    # Clean up
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
+    # Trust the GitHub public RSA key
+    # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
+    # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
+    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
+    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
+    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
+    && touch /usr/local/share/bash_history \
+    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
+# Use the Maven cache from the host and persist Bash history
+RUN mkdir -p /usr/local/share/m2 \
+    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+ARG MAVEN_VERSION=""
+ARG TRINO_VERSION="395"
+# Install Maven
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
+    # Install additional OS packages.
+    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends bash-completion vim \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+    # Install Trino CLI
+    && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
+    && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
+    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
+
+EXPOSE 8887
+
+# Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
+# the Docker socket if "overrideCommand": false is set in devcontainer.json.
+# The script will also execute CMD if you need to alter startup behaviors.
+ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
 CMD ["bash", "-c", "/run.sh"]
