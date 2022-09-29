@@ -134,7 +134,7 @@ RUN true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
 # Create home directory and transfert static files
-    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home \
+    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home 
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
@@ -174,7 +174,7 @@ RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-i
 # clean apt to reduce image size:
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ \
+    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ 
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
