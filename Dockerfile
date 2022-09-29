@@ -143,7 +143,8 @@ RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
-    &&  set -x \ for cert in /usr/local/share/ca-certificates/*; do \
+    &&  set -x \ 
+    && for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
     done \
