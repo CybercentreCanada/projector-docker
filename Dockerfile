@@ -100,9 +100,6 @@ RUN true \
     && if [ "${downloadUrl#*CLion}" != "$downloadUrl" ]; then apt-get install build-essential clang -y; else echo "Not CLion"; fi \
     && if [ "${downloadUrl#*pycharm}" != "$downloadUrl" ]; then apt-get install python2 python3 python3-distutils python3-pip python3-setuptools -y; else echo "Not pycharm"; fi \
     && if [ "${downloadUrl#*rider}" != "$downloadUrl" ]; then apt install apt-transport-https dirmngr gnupg ca-certificates -y && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF && echo "deb https://download.mono-project.com/repo/debian stable-buster main" | tee /etc/apt/sources.list.d/mono-official-stable.list && apt update && apt install mono-devel -y && apt install wget -y && wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb && apt-get update && apt-get install -y apt-transport-https && apt-get update && apt-get install -y dotnet-sdk-3.1 aspnetcore-runtime-3.1; else echo "Not rider"; fi \
-# clean apt to reduce image size:
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /var/cache/apt
 
 # copy the Projector dir:
 ENV PROJECTOR_DIR /projector
@@ -121,6 +118,46 @@ ARG ENABLE_NONROOT_DOCKER="true"
 # [Option] Use the OSS Moby CLI instead of the licensed Docker CLI
 ARG USE_MOBY="true"
 
+# Setting up Trino environment
+RUN true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+    && apt-get update  && apt-get install -y apt-transport-https \
+    # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
+    && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
+
+
+# Use the Maven cache from the host and persist Bash history
+RUN mkdir -p /usr/local/share/m2 \
+    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+ARG MAVEN_VERSION=""
+ARG TRINO_VERSION="395"
+
+# Install Maven
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
+    # Install additional OS packages.
+    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends bash-completion vim \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+    # Install Trino CLI
+    && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
+    && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
+    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
+
+
+RUN true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+# clean apt to reduce image size:
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ \
+
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
@@ -134,9 +171,18 @@ RUN true \
     && id -u $PROJECTOR_USER_NAME \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && cat /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
     && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
+# Trust the GitHub public RSA key
+# This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
+# https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
+    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
+    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
+    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
+    && touch /usr/local/share/bash_history \
+    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
 # Add custom CA certificates to Java trust
 RUN true \
@@ -150,45 +196,8 @@ RUN true \
     done \
     && rm /tmp/certificate.der
 
-
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 ENV HOME /home/$PROJECTOR_USER_NAME
-
-# Setting up Trino environment
-RUN true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-    && apt-get update  && apt-get install -y apt-transport-https \
-    # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
-    && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
-    # Clean up
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /$PROJECTOR_DIR/library-scripts/ \
-    # Trust the GitHub public RSA key
-    # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
-    # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
-    && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${USERNAME}/.ssh/known_hosts \
-    && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
-    && touch /usr/local/share/bash_history \
-    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
-# Use the Maven cache from the host and persist Bash history
-RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
-    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
-ARG MAVEN_VERSION=""
-ARG TRINO_VERSION="395"
-# Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
-    # Install additional OS packages.
-    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends bash-completion vim \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
-    # Install Trino CLI
-    && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
-    && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
-    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
 
 EXPOSE 8887
 
