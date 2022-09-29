@@ -161,6 +161,9 @@ RUN true \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
+# Install SDKMAN
+RUN curl -s "https://get.sdkman.io" || || echo "Could not download sdkman. Skipping."
+
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 # Install additional OS packages.
