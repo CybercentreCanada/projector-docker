@@ -161,6 +161,8 @@ RUN true \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
+ARG  SDKMAN_DIR=/usr/local/sdkman
+
 # Install SDKMAN
 RUN curl -s "https://get.sdkman.io" || echo "Could not download sdkman. Skipping."
 
