@@ -125,12 +125,6 @@ RUN true \
 # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" 
 
-
-# Use the Maven cache from the host and persist Bash history
-RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
-    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
-
 ARG MAVEN_VERSION=""
 ARG TRINO_VERSION="395"
 
@@ -161,10 +155,17 @@ RUN true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
+# Create home directory and transfert static files
+    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home \
+
+RUN true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
 # Move run scipt:
     && mv $PROJECTOR_DIR/run.sh run.sh \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
-    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home \
     && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
@@ -181,6 +182,12 @@ RUN true \
     && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
+
+# Use the Maven cache from the host and persist Bash history
+RUN mkdir -p /usr/local/share/m2 \
+    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+    && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+
 
 # Add custom CA certificates to Java trust
 RUN true \
