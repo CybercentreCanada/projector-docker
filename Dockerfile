@@ -161,7 +161,7 @@ RUN true \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
-ARG  SDKMAN_DIR=/usr/local/sdkman
+ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
 
 # Install SDKMAN
 RUN  true \
@@ -169,11 +169,11 @@ RUN  true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
-    && curl -s "https://get.sdkman.io" || echo "Could not download sdkman. Skipping." \
+    && curl -s "https://get.sdkman.io" | bash  \
     && ls -al /usr/local/sdkman
 
 # Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 # Install additional OS packages.
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
