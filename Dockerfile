@@ -125,7 +125,7 @@ RUN true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
     && apt-get update  && apt-get install -y apt-transport-https \
-    # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
+# Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" \
 
 
@@ -133,16 +133,17 @@ RUN true \
 RUN mkdir -p /usr/local/share/m2 \
     && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
     && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
+
 ARG MAVEN_VERSION=""
 ARG TRINO_VERSION="395"
 
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
-    # Install additional OS packages.
+# Install additional OS packages.
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
-    # Install Trino CLI
+# Install Trino CLI
     && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
     && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
     && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
@@ -174,7 +175,7 @@ RUN true \
     && cat /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
-    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
+    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh \
 # Trust the GitHub public RSA key
 # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
 # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
