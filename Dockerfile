@@ -164,7 +164,13 @@ RUN true \
 ARG  SDKMAN_DIR=/usr/local/sdkman
 
 # Install SDKMAN
-RUN curl -s "https://get.sdkman.io" || echo "Could not download sdkman. Skipping."
+RUN  true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+    && curl -s "https://get.sdkman.io" || echo "Could not download sdkman. Skipping." \
+    && ls -al /usr/local/sdkman
 
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . /usr/local/sdkman/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
