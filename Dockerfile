@@ -170,8 +170,8 @@ RUN  true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
     && curl -s "https://get.sdkman.io" | bash  \
-    && ls -al /usr/local/sdkman
-
+    && ls -al $SDKMAN_DIR
+    
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 # Install additional OS packages.
