@@ -161,19 +161,6 @@ RUN true \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
-ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
-
-# Install SDKMAN
-RUN  true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-    && curl -s "https://get.sdkman.io" | bash  \
-    && ls -al $SDKMAN_DIR
-    
-# Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 # Install additional OS packages.
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
@@ -186,6 +173,24 @@ RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ 
+
+USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
+ENV HOME /home/$PROJECTOR_USER_NAME
+
+ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
+
+# Install SDKMAN
+RUN  true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+#Install SDKMAN
+    && curl -s "https://get.sdkman.io" | bash  \
+    && ls -al $SDKMAN_DIR
+    
+# Install Maven
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
@@ -205,8 +210,6 @@ RUN true \
     done \
     && rm /tmp/certificate.der
 
-USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
-ENV HOME /home/$PROJECTOR_USER_NAME
 
 EXPOSE 8887
 
