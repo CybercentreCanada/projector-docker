@@ -171,7 +171,7 @@ RUN  true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
     && curl -s "https://get.sdkman.io" | bash  \
-    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} ${SDKMAN_DIR} 
+    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} ${SDKMAN_DIR} 
     
 # Install Maven
 RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" 
@@ -191,7 +191,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
     && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
 
 
