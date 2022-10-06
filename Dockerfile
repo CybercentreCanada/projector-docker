@@ -115,7 +115,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 # [Option] Use the OSS Moby CLI instead of the licensed Docker CLI
 ARG USE_MOBY="true"
 
-# Setting up Trino environment
+# The following steps are to set up Trino environment:
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
@@ -151,17 +151,33 @@ RUN true \
     && cat /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
-    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh \
+    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh 
+
 # Trust the GitHub public RSA key
 # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
 # https://docs.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints
-    && mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
+RUN mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
     && echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /home/${PROJECTOR_USER_NAME}/.ssh/known_hosts \
     && chown -R ${PROJECTOR_USER_NAME} /home/${PROJECTOR_USER_NAME}/.ssh \
     && touch /usr/local/share/bash_history \
-    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history \
+    && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
+
+ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
+
+# Install SDKMAN
+RUN  true \
+# Any command which returns non-zero exit code will cause this shell script to exit immediately:
+    && set -e \
+# Activate debugging to show execution details: all commands will be printed before execution
+    && set -x \
+    && curl -s "https://get.sdkman.io" | bash  \
+    && chown -R ${USER_PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} ${SDKMAN_DIR} 
+    
+# Install Maven
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" 
+
 # Install additional OS packages.
-    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
 # Install Trino CLI
@@ -172,24 +188,6 @@ RUN true \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ 
-
-USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
-ENV HOME /home/$PROJECTOR_USER_NAME
-
-ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
-
-# Install SDKMAN
-RUN  true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-#Install SDKMAN
-    && curl -s "https://get.sdkman.io" | bash  \
-    && ls -al $SDKMAN_DIR
-    
-# Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" \
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
@@ -209,6 +207,8 @@ RUN true \
     done \
     && rm /tmp/certificate.der
 
+USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
+ENV HOME /home/$PROJECTOR_USER_NAME
 
 EXPOSE 8887
 
