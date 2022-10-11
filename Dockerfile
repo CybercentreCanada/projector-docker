@@ -147,8 +147,7 @@ RUN true \
     && useradd -u ${PROJECTOR_USER_UID} -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
-    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-    && cat /etc/sudoers \
+    && echo "${PROJECTOR_USER_NAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${PROJECTOR_USER_NAME} \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
     && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
