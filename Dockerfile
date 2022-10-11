@@ -83,7 +83,7 @@ RUN true \
 # packages for user convenience:
     && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo unzip zip sed -y \
 # packages for IDEA (to disable warnings):
-    && apt-get install procps -y 
+    && apt-get install procps -y
 
 ARG downloadUrl
 
@@ -123,7 +123,7 @@ RUN true \
     && set -x \
     && apt-get update  && apt-get install -y apt-transport-https \
 # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
-    && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}" 
+    && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}"
 
 ARG MAVEN_VERSION=""
 ARG TRINO_VERSION="395"
@@ -134,7 +134,7 @@ RUN true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
 # Create home directory and transfert static files
-    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME  /home 
+    && mv $PROJECTOR_DIR/$PROJECTOR_USER_NAME /home
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
@@ -144,14 +144,14 @@ RUN true \
 # Move run scipt:
     && mv $PROJECTOR_DIR/run.sh run.sh \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
-    && useradd -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
+    && useradd -u ${PROJECTOR_USER_UID} -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && cat /etc/sudoers \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME /home/$PROJECTOR_USER_NAME \
     && chown -R $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME $PROJECTOR_DIR/ide/bin \
-    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh 
+    && chown $PROJECTOR_USER_NAME.$PROJECTOR_USER_NAME run.sh
 
 # Trust the GitHub public RSA key
 # This key was manually validated by running 'ssh-keygen -lf <key-file>' and comparing the fingerprint to the one found at:
@@ -171,10 +171,10 @@ RUN  true \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
     && curl -s "https://get.sdkman.io" | bash  \
-    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} ${SDKMAN_DIR} 
-    
+    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_GID} ${SDKMAN_DIR}
+
 # Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\"" 
+RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\""
 
 # Install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -187,11 +187,11 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # clean apt to reduce image size:
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/ 
+    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
-    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_UID} /usr/local/share/m2 \
+    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_GID} /usr/local/share/m2 \
     && ln -s /usr/local/share/m2 /home/${PROJECTOR_USER_NAME}/.m2
 
 
@@ -200,7 +200,7 @@ RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
-    &&  set -x \ 
+    &&  set -x \
     && for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
