@@ -144,6 +144,7 @@ RUN true \
 # Move run scipt:
     && mv $PROJECTOR_DIR/run.sh run.sh \
 # Change user to non-root (http://pjdietz.com/2016/08/28/nginx-in-docker-without-root.html):
+    && groupadd azure_pipelines_sudo \
     && useradd -u ${PROJECTOR_USER_UID} -d /home/$PROJECTOR_USER_NAME -s /bin/bash -G sudo,azure_pipelines_sudo $PROJECTOR_USER_NAME \
     && id -u $PROJECTOR_USER_NAME \
 # Grant user in $PROJECTOR_USER_NAME SUDO privilege and allow it run any command without authentication.
