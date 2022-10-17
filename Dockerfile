@@ -86,8 +86,9 @@ RUN true \
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
     && apt-get install git bash-completion sudo -y \
-# packages added for CCCS use (general use)
+# packages and CA certs added for CCCS use (general use)
     && apt-get install ca-certificates jq vim -y \
+    && update-ca-certificates \
 # packages added for CCCS use (this specific image)
     && apt-get install python3.8 python3-pip python3-setuptools python3.8-venv python-is-python3 nodejs -y \
     && apt-get install python3.8-dev libsasl2-dev libldap2-dev libssl-dev -y \
@@ -154,7 +155,7 @@ RUN mkdir $(dirname "${CURL_CA_BUNDLE}") \
     && for cert in /usr/local/share/ca-certificates/*; do \
         openssl x509 -outform der -in "$cert" -out /tmp/certificate.der; \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
-        $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/jre/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
+        $JAVA_HOME/bin/keytool -import -alias "$cert" -keystore $JAVA_HOME/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
         cat "${cert}" >>"${CURL_CA_BUNDLE}"; \
     done \
     && python3 -m pip config --global set global.cert "${CURL_CA_BUNDLE}" \
