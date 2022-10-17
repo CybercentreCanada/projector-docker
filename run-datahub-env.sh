@@ -42,6 +42,7 @@ if [[ ${ACR_LOGIN_STATUS} -eq 0 ]]; then
     docker run --rm -it --pull always \
       --init --privileged \
       -p 8887:8887 \
+      -p 9002:9002 \
       --env SSH_AUTH_SOCK=/usr/local/share/ssh-agent.sock \
       --mount type=bind,source="${containerHome}",target=/home/projector-user \
       --mount type=bind,source="${gpgExtraSocket}",target=/usr/local/share/S.gpg-agent \
