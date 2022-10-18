@@ -27,7 +27,7 @@ ARG downloadUrl
 RUN wget -q $downloadUrl -O - | tar -xz
 RUN find . -maxdepth 1 -type d -name * -execdir mv {} /ide \;
 
-FROM amazoncorretto:11 as projectorGradleBuilder
+FROM amazoncorretto:17 as projectorGradleBuilder
 
 ENV PROJECTOR_DIR /projector
 
