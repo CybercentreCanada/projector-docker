@@ -79,8 +79,9 @@ RUN true \
     && apt-get update \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
-# packages for user convenience:
-    && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo -y \
+# packages and CA certs added for CCCS use (general use)
+    && apt-get install ca-certificates jq vim -y \
+    && update-ca-certificates \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # clean apt to reduce image size:
