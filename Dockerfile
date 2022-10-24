@@ -29,6 +29,12 @@ RUN find . -maxdepth 1 -type d -name * -execdir mv {} /ide \;
 
 FROM amazoncorretto:17 as projectorGradleBuilder
 
+
+# # Make uchimera creds available inside the container
+# RUN --secret,id=config,dst=/home/AzDevOps/.docker/config.json,uid=1001 
+# # Make uchimera creds available inside the container
+# RUN --mount=type=secret,id=config,target=/tmp/config.json,uid=1001 
+
 ENV PROJECTOR_DIR /projector
 
 RUN yum update -y
@@ -126,7 +132,7 @@ RUN true \
     && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}"
 
 ARG MAVEN_VERSION=""
-ARG TRINO_VERSION="395"
+ARG TRINO_VERSION="400"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
@@ -205,6 +211,7 @@ RUN true \
         $PROJECTOR_DIR/ide/jbr/bin/keytool -import -alias "$cert" -keystore $PROJECTOR_DIR/ide/jbr/lib/security/cacerts -file /tmp/certificate.der -deststorepass changeit -noprompt; \
     done \
     && rm /tmp/certificate.der
+
 
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 ENV HOME /home/$PROJECTOR_USER_NAME
