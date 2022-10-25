@@ -29,12 +29,6 @@ RUN find . -maxdepth 1 -type d -name * -execdir mv {} /ide \;
 
 FROM amazoncorretto:17 as projectorGradleBuilder
 
-
-# # Make uchimera creds available inside the container
-# RUN --secret,id=config,dst=/home/AzDevOps/.docker/config.json,uid=1001 
-# # Make uchimera creds available inside the container
-# RUN --mount=type=secret,id=config,target=/tmp/config.json,uid=1001 
-
 ENV PROJECTOR_DIR /projector
 
 RUN yum update -y
@@ -109,7 +103,7 @@ ENV PROJECTOR_DIR /projector
 COPY --from=projectorStaticFiles $PROJECTOR_DIR $PROJECTOR_DIR
 
 ENV PROJECTOR_USER_NAME projector-user
-ARG PROJECTOR_USER_UID=1001
+ARG PROJECTOR_USER_UID=1000
 ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
 
 # [Option] Install zsh
@@ -221,5 +215,6 @@ EXPOSE 8887
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
 # the Docker socket if "overrideCommand": false is set in devcontainer.json.
 # The script will also execute CMD if you need to alter startup behaviors.
+
 ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
 CMD ["bash", "-c", "/run.sh"]
