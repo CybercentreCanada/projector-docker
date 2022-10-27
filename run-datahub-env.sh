@@ -29,6 +29,10 @@ if [[ ${ACR_LOGIN_STATUS} -eq 0 ]]; then
   if [[ ${DOCKER_LOGIN_STATUS} -eq 0 ]]; then
     containerHome="${HOME}/workspaces/datahub"
     mkdir -p "${containerHome}"
+    cp "${HOME}/.gitconfig" "${containerHome}/"
+
+    scratchDir="${HOME}/scratch"
+    mkdir -p "${scratchDir}"
 
     echo "Setting up GPG and SSH sockets"
     mkdir -p "${containerHome}/.gnupg"
@@ -49,6 +53,7 @@ if [[ ${ACR_LOGIN_STATUS} -eq 0 ]]; then
       --mount type=bind,source="${HOME}/.ssh/agent.sock",target=/usr/local/share/ssh-agent.sock \
       --mount type=bind,source="${sourceDir}",target=/workspace/datahub \
       --mount type=volume,source=datahub-dind-var-lib-docker,target=/var/lib/docker \
+      --mount type=bind,source="${scratchDir}",target=/workspace/scratch \
       uchimera.azurecr.io/cccs/dev/projector-intellij-ce:datahub
   else
     echo "Docker login failed"
