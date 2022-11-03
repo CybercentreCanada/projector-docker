@@ -175,14 +175,14 @@ RUN mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
 # # Install Maven
 # RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\""
 
-ARG  MAVEN_DIR=/home/${PROJECTOR_USER_NAME}/.build
+ARG MAVEN_DIR=/home/${PROJECTOR_USER_NAME}/.build
 ARG MAVEN_VERSION=3.6.3
 # Install Maven
 RUN mkdir -p ${MAVEN_DIR} \
     && cd ${MAVEN_DIR} \
     && wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip \
     && unzip apache-maven-${MAVEN_VERSION}-bin.zip \
-    && apache-maven-${MAVEN_VERSION} maven
+    && mv apache-maven-${MAVEN_VERSION} maven
 
 # Install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
