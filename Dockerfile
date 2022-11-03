@@ -191,11 +191,11 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # Install Trino CLI
     && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
     && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
-    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino \
-# # clean apt to reduce image size:
-#     && apt-get autoremove -y \
-#     && apt-get clean -y \
-#     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
+    && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino
+ # clean apt to reduce image size:
+     && apt-get autoremove -y \
+     && apt-get clean -y \
+     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
