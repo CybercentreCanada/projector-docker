@@ -161,19 +161,28 @@ RUN mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
     && touch /usr/local/share/bash_history \
     && chown ${PROJECTOR_USER_NAME} /usr/local/share/bash_history
 
-ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
+# ARG  SDKMAN_DIR=/home/${PROJECTOR_USER_NAME}/.sdkman
 
-# Install SDKMAN
-RUN  true \
-# Any command which returns non-zero exit code will cause this shell script to exit immediately:
-    && set -e \
-# Activate debugging to show execution details: all commands will be printed before execution
-    && set -x \
-    && curl -s "https://get.sdkman.io" | bash  \
-    && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_GID} ${SDKMAN_DIR}
+# # Install SDKMAN
+# RUN  true \
+# # Any command which returns non-zero exit code will cause this shell script to exit immediately:
+#     && set -e \
+# # Activate debugging to show execution details: all commands will be printed before execution
+#     && set -x \
+#     && curl -s "https://get.sdkman.io" | bash  \
+#     && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_GID} ${SDKMAN_DIR}
 
+# # Install Maven
+# RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\""
+
+ARG  MAVEN_DIR=/home/${PROJECTOR_USER_NAME}/.build
+ARG MAVEN_VERSION=3.6.3
 # Install Maven
-RUN su ${PROJECTOR_USER_NAME} -c "umask 0002 && . ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install maven \"${MAVEN_VERSION}\""
+RUN mkdir -p ${MAVEN_DIR} \
+    && cd ${MAVEN_DIR} \
+    && wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip \
+    && unzip apache-maven-${MAVEN_VERSION}-bin.zip \
+    && apache-maven-${MAVEN_VERSION} maven
 
 # Install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -183,10 +192,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
     && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
     && ln -s /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar /usr/local/bin/trino \
-# clean apt to reduce image size:
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
+# # clean apt to reduce image size:
+#     && apt-get autoremove -y \
+#     && apt-get clean -y \
+#     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
