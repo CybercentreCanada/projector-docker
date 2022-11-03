@@ -185,6 +185,7 @@ RUN mkdir -p ${MAVEN_DIR} \
     && mv apache-maven-${MAVEN_VERSION} maven \
     && chown -R ${PROJECTOR_USER_UID}:${PROJECTOR_USER_GID} maven
 
+
 # Install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends bash-completion vim \
@@ -219,6 +220,7 @@ RUN true \
 
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 ENV HOME /home/$PROJECTOR_USER_NAME
+ENV PATH="${PATH}:$HOME/.build/maven/bin"
 
 EXPOSE 8887
 
