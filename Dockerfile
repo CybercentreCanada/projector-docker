@@ -83,7 +83,7 @@ RUN true \
 # packages for user convenience:
     && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo unzip zip sed -y \
 # packages for IDEA (to disable warnings):
-    && apt-get install procps -y
+    && apt-get install procps -y \
 # maven
     && apt-get install maven
 
