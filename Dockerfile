@@ -85,7 +85,7 @@ RUN true \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # maven
-    && apt-get install maven
+    && apt-get install maven -y
 
 ARG downloadUrl
 
