@@ -81,11 +81,9 @@ RUN true \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
-    && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo unzip zip sed -y \
+    && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo unzip zip sed apt-utils -y \
 # packages for IDEA (to disable warnings):
-    && apt-get install procps -y \
-# maven
-    && apt-get install maven -y
+    && apt-get install procps -y
 
 ARG downloadUrl
 
@@ -117,18 +115,19 @@ ARG ENABLE_NONROOT_DOCKER="true"
 # [Option] Use the OSS Moby CLI instead of the licensed Docker CLI
 ARG USE_MOBY="true"
 
-# The following steps are to set up Trino environment:
+# The steps below are to set up Trino environment:
+ARG TRINO_VERSION="400"
+
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
     && apt-get update  && apt-get install -y apt-transport-https \
+    # maven
+    && apt-get install maven -y \
 # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
     && /bin/bash /$PROJECTOR_DIR/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${PROJECTOR_USER_NAME}" "${USE_MOBY}"
-
-ARG MAVEN_VERSION=""
-ARG TRINO_VERSION="400"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
@@ -193,7 +192,6 @@ RUN true \
     done \
     && rm /tmp/certificate.der
 
-
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 ENV HOME /home/$PROJECTOR_USER_NAME
 
@@ -202,6 +200,5 @@ EXPOSE 8887
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
 # the Docker socket if "overrideCommand": false is set in devcontainer.json.
 # The script will also execute CMD if you need to alter startup behaviors.
-
 ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
 CMD ["bash", "-c", "/run.sh"]
