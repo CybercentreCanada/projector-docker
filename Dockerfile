@@ -88,7 +88,7 @@ RUN true \
     && apt-get install sudo unzip zip sed apt-utils -y \
     && apt-get install git bash-completion sudo -y \
 # packages for IDEA (to disable warnings):
-    && apt-get install procps -y
+    && apt-get install procps -y \
 # clean apt to reduce image size:
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt
@@ -183,7 +183,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # clean apt to reduce image size:
      && apt-get autoremove -y \
      && apt-get clean -y \
-     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts/
+     && rm -rf /var/lib/apt/lists/* $PROJECTOR_DIR/library-scripts
 
 # Use the Maven cache from the host and persist Bash history
 RUN mkdir -p /usr/local/share/m2 \
