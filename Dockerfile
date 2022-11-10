@@ -81,7 +81,11 @@ RUN true \
 # packages for awt:
     && apt-get install libxext6 libxrender1 libxtst6 libxi6 libfreetype6 -y \
 # packages for user convenience:
-    && apt-get install ca-certificates ca-certificates-java git bash-completion vim sudo unzip zip sed apt-utils -y \
+    && apt-get install git bash-completion vim -y \
+ # packages and CA certs added for CCCS use (general use) 
+    && apt-get install ca-certificates jq vim -y \ 
+    && update-ca-certificates \ 
+    && apt-get install sudo unzip zip sed apt-utils -y \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y
 
@@ -164,8 +168,7 @@ RUN mkdir -p /home/${PROJECTOR_USER_NAME}/.ssh \
 
 # Install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends bash-completion vim \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+    && apt-get -y install --no-install-recommends bash-completion \
 # Install Trino CLI
     && wget https://repo1.maven.org/maven2/io/trino/trino-cli/${TRINO_VERSION}/trino-cli-${TRINO_VERSION}-executable.jar -P /usr/local/bin \
     && chmod +x /usr/local/bin/trino-cli-${TRINO_VERSION}-executable.jar \
