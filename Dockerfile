@@ -75,7 +75,6 @@ RUN true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
-    && update-ca-certificates \
 # install packages:
     && apt-get update \
 # packages for awt:
@@ -86,7 +85,6 @@ RUN true \
     && apt-get install ca-certificates jq vim -y \ 
     && update-ca-certificates \ 
     && apt-get install sudo unzip zip sed apt-utils -y \
-    && apt-get install git bash-completion sudo -y \
 # packages for IDEA (to disable warnings):
     && apt-get install procps -y \
 # clean apt to reduce image size:
@@ -134,7 +132,8 @@ RUN true \
     && set -e \
 # Activate debugging to show execution details: all commands will be printed before execution
     && set -x \
-    && apt-get update  && apt-get install -y apt-transport-https \
+    && apt-get update \
+    && apt-get install -y apt-transport-https \
     # maven
     && apt-get install maven -y \
 # Use Docker script from script library to set things up to allow use in ${PROJECTOR_USER_NAME} to run docker commands without sudo
