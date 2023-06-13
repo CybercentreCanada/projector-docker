@@ -29,7 +29,7 @@ if [[ ${ACR_LOGIN_STATUS} -eq 0 ]]; then
   if [[ ${DOCKER_LOGIN_STATUS} -eq 0 ]]; then
     mkdir -p ~/workspaces/trino
     echo "Starting IDE"
-    docker run --rm --pull always -p 8887:8887 --mount type=bind,source="${HOME}/workspaces/trino",target=/home/projector-user --mount type=bind,source="${trinoCloneDir}",target=/workspace/trino -it uchimera.azurecr.io/cccs/dev/projector-intellij-ce:trino
+    docker run --rm --pull always --init --privileged -p 8887:8887 --mount type=bind,source="${HOME}/workspaces/trino",target=/home/projector-user --mount type=bind,source="${trinoCloneDir}",target=/workspace/trino -it uchimera.azurecr.io/cccs/dev/projector-intellij-ce:feature_CLDN-2234
   else
     echo "Docker login failed"
     exit 1
