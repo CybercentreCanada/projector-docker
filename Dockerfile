@@ -125,7 +125,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 ARG USE_MOBY="true"
 
 # The steps below are to set up Trino environment:
-ARG TRINO_VERSION="400"
+ARG TRINO_VERSION="422"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
