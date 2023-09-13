@@ -27,7 +27,7 @@ ARG downloadUrl
 RUN wget -q $downloadUrl -O - | tar -xz
 RUN find . -maxdepth 1 -type d -name * -execdir mv {} /ide \;
 
-FROM amazoncorretto:17 as projectorGradleBuilder
+FROM amazoncorretto:20 as projectorGradleBuilder
 
 ENV PROJECTOR_DIR /projector
 
@@ -125,7 +125,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 ARG USE_MOBY="true"
 
 # The steps below are to set up Trino environment:
-ARG TRINO_VERSION="400"
+ARG TRINO_VERSION="426"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
