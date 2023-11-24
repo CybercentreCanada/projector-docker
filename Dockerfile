@@ -27,7 +27,7 @@ ARG downloadUrl
 RUN wget -q $downloadUrl -O - | tar -xz
 RUN find . -maxdepth 1 -type d -name * -execdir mv {} /ide \;
 
-FROM amazoncorretto:20 as projectorGradleBuilder
+FROM amazoncorretto:${containerJdkVersion} as projectorGradleBuilder
 
 ENV PROJECTOR_DIR /projector
 
@@ -112,7 +112,7 @@ ENV PROJECTOR_DIR /projector
 COPY --from=projectorStaticFiles $PROJECTOR_DIR $PROJECTOR_DIR
 
 ENV PROJECTOR_USER_NAME projector-user
-ARG PROJECTOR_USER_UID=1000
+ARG PROJECTOR_USER_UID=1001
 ARG PROJECTOR_USER_GID=$PROJECTOR_USER_UID
 
 # [Option] Install zsh
@@ -125,7 +125,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 ARG USE_MOBY="true"
 
 # The steps below are to set up Trino environment:
-ARG TRINO_VERSION="426"
+ARG TRINO_VERSION="431"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
@@ -203,6 +203,8 @@ RUN true \
 
 USER $PROJECTOR_USER_NAME:$PROJECTOR_USER_GID
 ENV HOME /home/$PROJECTOR_USER_NAME
+
+RUN echo "JAVA_HOME: ${JAVA_HOME}" >&2
 
 EXPOSE 8887
 
