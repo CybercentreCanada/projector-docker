@@ -32,7 +32,7 @@ FROM amazoncorretto:${containerJdkVersion} as projectorGradleBuilder
 ENV PROJECTOR_DIR /projector
 
 RUN yum update -y
-RUN yum install git -y
+RUN yum install git findutils -y
 
 # projector-server:
 RUN git clone https://github.com/JetBrains/projector-server.git $PROJECTOR_DIR/projector-server
