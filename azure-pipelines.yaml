@@ -1,5 +1,5 @@
 trigger:
-  batch: "true"
+  batch: true
   branches:
     include:
       - cccs-main
@@ -13,7 +13,7 @@ variables:
   containerJdkVersion: 22
   DOCKER_BUILDKIT: 1
 
-# pool: cauldron-vmss
+pool: cauldron-vmss
 
 steps:
   - bash: |
