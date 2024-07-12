@@ -32,7 +32,7 @@ FROM amazoncorretto:${containerJdkVersion} as projectorGradleBuilder
 ENV PROJECTOR_DIR /projector
 
 RUN yum update -y
-RUN yum install git -y
+RUN yum install git findutils -y
 
 # projector-server:
 RUN git clone https://github.com/JetBrains/projector-server.git $PROJECTOR_DIR/projector-server
@@ -125,7 +125,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 ARG USE_MOBY="true"
 
 # The steps below are to set up Trino environment:
-ARG TRINO_VERSION="444"
+ARG TRINO_VERSION="451"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
