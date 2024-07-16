@@ -38,6 +38,8 @@ RUN yum install git findutils -y
 RUN git clone https://github.com/JetBrains/projector-server.git $PROJECTOR_DIR/projector-server
 WORKDIR $PROJECTOR_DIR/projector-server
 ARG buildGradle
+# Update the intellijPluginVersion in gradle.properties, see: https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/851
+RUN sed -i 's/intellijPluginVersion=1.3.0/intellijPluginVersion=1.3.1/' gradle.properties
 RUN if [ "$buildGradle" = "true" ]; then ./gradlew clean; else echo "Skipping gradle build"; fi
 RUN if [ "$buildGradle" = "true" ]; then ./gradlew :projector-server:distZip; else echo "Skipping gradle build"; fi
 RUN cd projector-server/build/distributions && find . -maxdepth 1 -type f -name projector-server-*.zip -exec mv {} projector-server.zip \;
@@ -125,7 +127,7 @@ ARG ENABLE_NONROOT_DOCKER="true"
 ARG USE_MOBY="true"
 
 # The steps below are to set up Trino environment:
-ARG TRINO_VERSION="451"
+ARG TRINO_VERSION="452"
 
 RUN true \
 # Any command which returns non-zero exit code will cause this shell script to exit immediately:
